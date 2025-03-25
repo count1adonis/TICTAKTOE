@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe with AI</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #1e1e2f; /* Deep background color */
+      color: #ffffff;
+    }
+    .container {
+      text-align: center;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 5px;
+      margin: 20px auto;
+    }
+    .cell {
+      width: 100px;
+      height: 100px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2rem;
+      font-weight: bold;
+      background-color: #2e2e3f;
+      border: 2px solid #444;
+      cursor: pointer;
+      color: #ffffff;
+    }
+    .cell.taken {
+      pointer-events: none;
+    }
+    .message {
+      font-size: 1.5rem;
+      margin-top: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      margin-top: 15px;
+      cursor: pointer;
+      background-color: #444;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="board" id="board">
+      <!-- Cells will be dynamically generated -->
+    </div>
+    <div class="message" id="message">Player X's turn</div>
+    <button id="reset">Reset Game</button>
+    <audio id="moveSound" src="https://www.soundjay.com/button/button-4.mp3"></audio>
+    <audio id="winSound" src="https://www.soundjay.com/button/button-10.mp3"></audio>
+    <audio id="drawSound" src="https://www.soundjay.com/button/button-3.mp3"></audio>
+  </div>
+  <script>
+    const board = document.getElementById('board');
+    const message = document.getElementById('message');
+    const resetButton = document.getElementById('reset');
+    const moveSound = document.getElementById('moveSound');
+    const winSound = document.getElementById('winSound');
+    const drawSound = document.getElementById('drawSound');
+
+    let currentPlayer = 'X';
+    let gameActive = true;
+    let gameState = Array(9).fill(null);
+
+    // Winning combinations
+    const winningCombinations = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+      [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+      [0, 4, 8], [2, 4, 6]             // Diagonals
+    ];
+
+    // Create the board
+    function createBoard() {
+      board.innerHTML = ''; // Clear the board
+      gameState = Array(9).fill(null);
+      gameActive = true;
+      currentPlayer = 'X';
+      message.textContent = `Player ${currentPlayer}'s turn`;
+
+      for (let i = 0; i < 9; i++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        cell.dataset.index = i;
+
+        cell.addEventListener('click', handleCellClick);
+        board.appendChild(cell);
+      }
+    }
+
+    // Handle cell click
+    function handleCellClick(event) {
+      const cell = event.target;
+      const index = cell.dataset.index;
+
+      if (!gameActive || gameState[index]) return;
+
+      makeMove(index, currentPlayer);
+      moveSound.play();
+
+      if (checkWinner()) {
+        message.textContent = `Player ${currentPlayer} wins!`;
+        winSound.play();
+        gameActive = false;
+        return;
+      }
+
+      if (gameState.every(cell => cell)) {
+        message.textContent = `It's a draw!`;
+        drawSound.play();
+        gameActive = false;
+        return;
+      }
+
+      currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+      message.textContent = `Player ${currentPlayer}'s turn`;
+
+      if (currentPlayer === 'O') {
+        setTimeout(aiMove, 500); // Delay AI move for a better experience
+      }
+    }
+
+    // AI Move
+    function aiMove() {
+      if (!gameActive) return;
+
+      const emptyCells = gameState
+        .map((cell, index) => (cell === null ? index : null))
+        .filter(index => index !== null);
+
+      const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+      makeMove(randomIndex, 'O');
+      moveSound.play();
+
+      if (checkWinner()) {
+        message.textContent = `Player O wins!`;
+        winSound.play();
+        gameActive = false;
+        return;
+      }
+
+      if (gameState.every(cell => cell)) {
+        message.textContent = `It's a draw!`;
+        drawSound.play();
+        gameActive = false;
+        return;
+      }
+
+      currentPlayer = 'X';
+      message.textContent = `Player ${currentPlayer}'s turn`;
+    }
+
+    // Make a move
+    function makeMove(index, player) {
+      const cell = board.children[index];
+      gameState[index] = player;
+      cell.textContent = player;
+      cell.classList.add('taken');
+    }
+
+    // Check for winner
+    function checkWinner() {
+      return winningCombinations.some(combination => {
+        const [a, b, c] = combination;
+        return gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c];
+      });
+    }
+
+    // Reset the game
+    resetButton.addEventListener('click', createBoard);
+
+    // Initialize the game
+    createBoard();
+  </script>
+</body>
+</html>
